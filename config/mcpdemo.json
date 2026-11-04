@@ -1,0 +1,252 @@
+{
+  "productVersion": null,
+  "productBuild": null,
+  "uiname": "Metal",
+  "author": "",
+  "version": "1",
+  "comment": "",
+  "hostname": "localhost",
+  "port": "5432",
+  "oracleSid": "hoteldemo",
+  "user": "mcpdemo",
+  "pass": "FROM_ENV_VARIABLE_DB_PASS",
+  "oracleVersion": null,
+  "dbProduct": "POSTGRESQL",
+  "otherUserName": "mcpdemo%",
+  "xSize": "800",
+  "ySize": "600",
+  "debugMessages": "YES",
+  "otherMessages": "YES",
+  "codeComments": "YES",
+  "userObjects": "YES",
+  "otherObjects": "YES",
+  "methodsByte": "YES",
+  "methodsByteObj": "YES",
+  "methodsShort": "YES",
+  "methodsShortObj": "YES",
+  "methodsInt": "YES",
+  "methodsIntObj": "YES",
+  "methodsLong": "YES",
+  "methodsLongObj": "YES",
+  "methodsFloat": "YES",
+  "methodsFloatObj": "YES",
+  "methodsDouble": "YES",
+  "methodsDoubleObj": "YES",
+  "validate": "YES",
+  "extraSql": "YES",
+  "packageName": "com.mcpdbwizard.customer",
+  "codeBaseDirectory": "generated-src",
+  "codeBaseDirectoryFrozen": "NO",
+  "sqlFileDirectory": "/data/sqltext/mcpdemo",
+  "codeStatistics": "YES",
+  "javaAccessType": "public",
+  "javaNamingConvention": "InitialCapitalLetters.java",
+  "targetJvm": "21",
+  "methodSqlPrefix": "",
+  "methodPlsqlPrefix": "",
+  "extraClassCode": "",
+  "webServices": "NO",
+  "mcpServer": "YES",
+  "mcpHttpToken": "NO",
+  "mcpHttps": "NO",
+  "mcpOAuth": "NO",
+  "mcpInstructions": "This is hotel room booking system for a boutique hotel chain. It does not allow direct SQL access. You must either confirm the existence of a customer before making a booking, or create a customer before you create the booking.",
+  "prometheusServer": "YES",
+  "runOnStart": "YES",
+  "metricsPort": "9464",
+  "webServicesAbstractBfile": null,
+  "wsPreCallStub": null,
+  "wsPostCallStub": null,
+  "wsAlwaysRelease": null,
+  "wsRecordType": null,
+  "wsNumberType": null,
+  "wsInterfaceName": null,
+  "wsImplName": null,
+  "daoFinalize": "NO",
+  "daoLogType": "Console Log",
+  "daoLogName": "mcp",
+  "daoFactoryName": "DaoFactory",
+  "daoEjb": "NONE",
+  "daoConnectionType": "Hard coded connect string",
+  "daoConnectionName": "jdbc:postgresql://localhost:5432/hoteldemo?user=mcpdemo&password=FROM_ENV_VARIABLE_DB_PASS",
+  "commitConnections": "YES",
+  "closeConnections": "NO",
+  "daoPool": "YES",
+  "daoPoolMaxSize": "10",
+  "daoPoolMinIdle": "1",
+  "daoPoolMaxWaitMs": "30000",
+  "daoPoolIdleTimeoutMs": "300000",
+  "daoPoolOnReturn": "COMMIT",
+  "ec30ProjectPath": null,
+  "ec30RelPath": null,
+  "defaultTempdir": "user.dir",
+  "defaultTempPrefix": "OSOFT",
+  "defaultTempSuffix": ".tmp",
+  "postScriptName": "",
+  "postScriptContent": "",
+  "xwsType": "NONE",
+  "xwsIface": "",
+  "xmsImpl": "",
+  "sequences": [
+    {
+      "index": 0.0,
+      "name": "complaint_id_seq",
+      "user": "mcpdemo"
+    }
+  ],
+  "tables": [
+    {
+      "index": 0.0,
+      "name": "complaints",
+      "user": "mcpdemo",
+      "mcpCrud": "CR",
+      "mcpDescriptions": {
+        "INS": "Create a new complaint. Please manage the users expectations about outcomes.",
+        "PK": "Find a complaint by complaint ID",
+        "UPD": "",
+        "DEL": ""
+      }
+    },
+    {
+      "index": 1.0,
+      "name": "customers",
+      "user": "mcpdemo",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 2.0,
+      "name": "hotels",
+      "user": "mcpdemo",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 3.0,
+      "name": "hotel_amenities",
+      "user": "mcpdemo",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "PK": "",
+        "DEL": "",
+        "UPD": "",
+        "IX_hotel_amenities_amenity_name": "This lets you find which hotels have an amenity.",
+        "INS": ""
+      }
+    },
+    {
+      "index": 4.0,
+      "name": "hotel_amenities_summary",
+      "user": "mcpdemo",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 5.0,
+      "name": "hotel_regions",
+      "user": "mcpdemo",
+      "mcpCrud": "R"
+    },
+    {
+      "index": 6.0,
+      "name": "hotel_rooms",
+      "user": "mcpdemo",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "UPD": "",
+        "DEL": "",
+        "INS": "",
+        "PK": "",
+        "FK_room_bookings_hotel_room": "This lets you find bookings for a specific room in a specific hotel.",
+        "IX_hotel_rooms_room_idx": "This lets you find bookings for a specific room in a specific hotel."
+      }
+    },
+    {
+      "index": 7.0,
+      "name": "room_bookings",
+      "user": "mcpdemo",
+      "mcpCrud": "R",
+      "mcpDescriptions": {
+        "INS": "",
+        "DEL": "",
+        "UPD": "",
+        "PK": ""
+      }
+    }
+  ],
+  "procedures": [
+    {
+      "index": 0.0,
+      "name": "bookroom",
+      "user": "mcpdemo_room_manager",
+      "pkg": "null",
+      "overload": "null",
+      "mcpDescription": "The customer must exist before you call this. Note that if the customer already has a booking, that may be returned, even if this booking didn't work."
+    },
+    {
+      "index": 1.0,
+      "name": "getroomlist",
+      "user": "mcpdemo_room_manager",
+      "pkg": "null",
+      "overload": "null"
+    },
+    {
+      "index": 2.0,
+      "name": "hotel_occupancy",
+      "user": "mcpdemo",
+      "pkg": "null",
+      "overload": "null"
+    },
+    {
+      "index": 3.0,
+      "name": "upsert_customer",
+      "user": "mcpdemo",
+      "pkg": "null",
+      "overload": "null",
+      "mcpDescription": "customer name is always upper case, and must be unique. Phone number and email must be unique if provided."
+    }
+  ],
+  "sqlStatements": [
+    {
+      "index": 0.0,
+      "filename": "amenity_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "This provides a list of amenities our hotels offer, including how common they are and whether they are chargable.",
+      "sql": "select * from hotel_amenities_summary order by amenity_name;"
+    },
+    {
+      "index": 1.0,
+      "filename": "complaints_per_customer.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "A list of complaints made by a customer.",
+      "sql": "select * from complaints \r\nwhere customer_name = ? /* String */\r\norder by complaint_date;"
+    },
+    {
+      "index": 2.0,
+      "filename": "hotelList.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "mcpDescription": "Use this to get a list of all hotels.",
+      "sql": "SELECT * FROM hotels ORDER BY hotel_name;"
+    },
+    {
+      "index": 3.0,
+      "filename": "region_list.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "select * from hotel_regions order by region_name;"
+    },
+    {
+      "index": 4.0,
+      "filename": "stays_per_customer.sql",
+      "createClass": "YES",
+      "turnCursorsIntoRecords": "YES",
+      "params": [],
+      "sql": "SELECT booking_id, hotel_name, room_number, start_date, end_date\nfrom room_bookings\nwhere customer_name = UPPER(LTRIM(RTRIM(? /* String */)))\nORDER BY start_date, booking_id;\n"
+    }
+  ],
+  "extraProperties": {}
+}
