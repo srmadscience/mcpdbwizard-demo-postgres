@@ -176,30 +176,30 @@
       "index": 0.0,
       "name": "bookroom",
       "user": "mcpdemo_room_manager",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "The customer must exist before you call this. Note that if the customer already has a booking, that may be returned, even if this booking didn't work."
     },
     {
       "index": 1.0,
       "name": "getroomlist",
       "user": "mcpdemo_room_manager",
-      "pkg": "null",
-      "overload": "null"
+      "pkg": null,
+      "overload": null
     },
     {
       "index": 2.0,
       "name": "hotel_occupancy",
       "user": "mcpdemo",
-      "pkg": "null",
-      "overload": "null"
+      "pkg": null,
+      "overload": null
     },
     {
       "index": 3.0,
       "name": "upsert_customer",
       "user": "mcpdemo",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "customer name is always upper case, and must be unique. Phone number and email must be unique if provided."
     }
   ],

@@ -126,55 +126,55 @@
       "index": 0.0,
       "name": "getroomlist",
       "user": "mcpdemo_room_manager",
-      "pkg": "null",
-      "overload": "null"
+      "pkg": null,
+      "overload": null
     },
     {
       "index": 1.0,
       "name": "my_details",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "Who this conversation is for: the connected customer's name, phone number and email address. Takes no arguments."
     },
     {
       "index": 2.0,
       "name": "my_bookings",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "Every booking the connected customer holds, soonest first. Takes no arguments."
     },
     {
       "index": 3.0,
       "name": "book_rooms",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "Book rooms for the connected customer. All or nothing: if fewer rooms are free than asked for, nothing is booked and p_message says so. Check availability with getroomlist first. Dates are whole days."
     },
     {
       "index": 4.0,
       "name": "cancel_booking",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "Cancel one of the connected customer's bookings by booking id. A booking that is not theirs is reported as not found."
     },
     {
       "index": 5.0,
       "name": "my_complaints",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "The connected customer's complaints, oldest first. Takes no arguments."
     },
     {
       "index": 6.0,
       "name": "add_complaint",
       "user": "mcpdemo_customer_portal",
-      "pkg": "null",
-      "overload": "null",
+      "pkg": null,
+      "overload": null,
       "mcpDescription": "Record a complaint from the connected customer and return its complaint id. Please manage their expectations about outcomes."
     }
   ],
