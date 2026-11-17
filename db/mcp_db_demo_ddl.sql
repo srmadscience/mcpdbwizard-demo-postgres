@@ -20,6 +20,14 @@
 --   block that raises U0900 and a handler that undoes the block's own work.
 -- * RAISE_APPLICATION_ERROR(-20nnn, msg) -> SQLSTATE U0nnn.
 --
+-- Added, with no Oracle counterpart: row-level security on customers, room_bookings
+-- and complaints, for the login mcpdemo_customer (mcp_db_demo_user.sql creates it).
+-- It owns nothing, so the policies apply to it: it sees and writes only the rows of
+-- the customer named by mcp.customer_name, and none when that is unset. mcpdemo owns
+-- the tables, so staff connecting as mcpdemo see everything. Availability goes through
+-- the SECURITY DEFINER function room_is_booked, so a room another customer holds
+-- still reads as booked.
+--
 -- Kept as Oracle has it, quirks included: bookroom with p_room_count 0 or NULL books
 -- every free room, and getroomlist's overlap test also rejects any room booked after
 -- p_from_date.
@@ -279,6 +287,50 @@ BEGIN
     ORDER BY c.occupancy_date, h.hotel_name;
 END $$;
 
+-- ---- row-level security -----------------------------------------------------
+--
+-- For mcpdemo_customer, the customer-facing login. Each policy matches the
+-- customer named by mcp.customer_name, normalised as current_customer()
+-- normalises it. Unset, the setting reads as NULL or '', the comparison is
+-- never true, and the role sees no rows: it fails closed. mcpdemo owns these
+-- tables and RLS is not FORCEd, so the policies do not apply to it.
+
+ALTER TABLE customers     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE room_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE complaints    ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY customers_own ON customers FOR SELECT TO mcpdemo_customer
+    USING (customer_name = (SELECT upper(nullif(btrim(current_setting('mcp.customer_name', true)), ''))));
+
+CREATE POLICY room_bookings_own ON room_bookings FOR ALL TO mcpdemo_customer
+    USING      (customer_name = (SELECT upper(nullif(btrim(current_setting('mcp.customer_name', true)), ''))))
+    WITH CHECK (customer_name = (SELECT upper(nullif(btrim(current_setting('mcp.customer_name', true)), ''))));
+
+CREATE POLICY complaints_own ON complaints FOR ALL TO mcpdemo_customer
+    USING      (customer_name = (SELECT upper(nullif(btrim(current_setting('mcp.customer_name', true)), ''))))
+    WITH CHECK (customer_name = (SELECT upper(nullif(btrim(current_setting('mcp.customer_name', true)), ''))));
+
+-- Whether any booking, anyone's, overlaps the dates: getRoomList's test,
+-- unchanged. SECURITY DEFINER runs it as mcpdemo, past the policies, so a
+-- customer's availability check counts other customers' bookings without
+-- being able to read them. It returns only a boolean; the fixed search_path
+-- is what keeps a definer function from resolving names the caller planted.
+CREATE FUNCTION room_is_booked(p_hotel_name varchar, p_room_number numeric,
+                               p_from_date timestamp(0), p_to_date timestamp(0)) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER SET search_path = mcpdemo, pg_temp AS $$
+    SELECT EXISTS (SELECT NULL
+                   FROM   mcpdemo.room_bookings b
+                   WHERE  b.hotel_name  = p_hotel_name
+                   AND    b.room_number = p_room_number
+                   AND    (   (b.start_date >= p_from_date AND b.end_date <= p_to_date)   -- bookings inside our booking...
+                           OR (b.start_date <= p_from_date AND b.end_date >= p_to_date)   -- bookings absorbing our booking...
+                           OR (b.start_date >= p_from_date AND b.end_date >= p_from_date) -- conflict with start
+                           OR (b.start_date <= p_to_date   AND b.end_date >= p_to_date))) -- conflict with end
+$$;
+
+REVOKE EXECUTE ON FUNCTION room_is_booked(varchar, numeric, timestamp(0), timestamp(0)) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION room_is_booked(varchar, numeric, timestamp(0), timestamp(0)) TO mcpdemo_customer;
+
 -- ---- room_manager -----------------------------------------------------------
 
 SET search_path = mcpdemo_room_manager, mcpdemo, public;
@@ -301,14 +353,7 @@ BEGIN
         SELECT r.hotel_name, r.room_number, r.room_special_features
         FROM   hotel_rooms r
         WHERE  r.hotel_name = upper(btrim(p_hotel_name))
-        AND    NOT EXISTS (SELECT NULL
-                           FROM   room_bookings b
-                           WHERE  b.hotel_name  = r.hotel_name
-                           AND    b.room_number = r.room_number
-                           AND    (   (b.start_date >= p_from_date AND b.end_date <= p_to_date)   -- bookings inside our booking...
-                                   OR (b.start_date <= p_from_date AND b.end_date >= p_to_date)   -- bookings absorbing our booking...
-                                   OR (b.start_date >= p_from_date AND b.end_date >= p_from_date) -- conflict with start
-                                   OR (b.start_date <= p_to_date   AND b.end_date >= p_to_date))) -- conflict with end
+        AND    NOT room_is_booked(r.hotel_name, r.room_number, p_from_date, p_to_date)
         ORDER BY room_number;
     END IF;
 END $$;
@@ -467,3 +512,24 @@ BEGIN
     VALUES (l_customer, p_complaint_text)
     RETURNING complaint_id INTO p_complaint_id;
 END $$;
+
+-- ---- mcpdemo_customer's privileges ---------------------------------------------
+--
+-- Read the hotels; read its own customer row; read, book and cancel its own
+-- bookings; read and add its own complaints. The policies above decide which
+-- rows. Routines are executable by PUBLIC, as Postgres creates them, so the
+-- schemas' USAGE is what reaches them; the staff routines it can reach still
+-- run as mcpdemo_customer and meet the same policies (bookroom for another
+-- customer fails WITH CHECK; upsert_customer has no INSERT or UPDATE on
+-- customers).
+
+SET search_path = mcpdemo, public;
+
+GRANT USAGE ON SCHEMA mcpdemo, mcpdemo_room_manager,
+                      mcpdemo_customer_portal TO mcpdemo_customer;
+GRANT SELECT ON hotels, hotel_rooms, hotel_amenities, hotel_regions,
+                hotel_amenities_summary TO mcpdemo_customer;
+GRANT SELECT                 ON customers     TO mcpdemo_customer;
+GRANT SELECT, INSERT, DELETE ON room_bookings TO mcpdemo_customer;
+GRANT SELECT, INSERT         ON complaints    TO mcpdemo_customer;
+GRANT USAGE ON SEQUENCE booking_id_seq, complaint_id_seq TO mcpdemo_customer;

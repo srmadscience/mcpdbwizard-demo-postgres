@@ -19,7 +19,7 @@ customers and bookings, and the same two configs.
 
 | File | Purpose |
 | --- | --- |
-| `db/mcp_db_demo_user.sql` | Creates the `mcpdemo` login role. Run once, as a superuser |
+| `db/mcp_db_demo_user.sql` | Creates the `mcpdemo` and `mcpdemo_customer` login roles. Run once, as a superuser |
 | `db/mcp_db_demo_ddl.sql` | Schemas, tables, indexes, views, sequences, `upsert_customer`, `hotel_occupancy`, and the `room_manager` and `customer_portal` routines |
 | `db/mcp_db_demo_dml.sql` | Sample data: 10 hotels, 21 amenities, 52 rooms, 43 customers, 92 bookings, 7 complaints |
 | `db/mcp_db_demo_drop.sql` | Drops everything the DDL creates |
@@ -39,8 +39,9 @@ psql -h <host> -U mcpdemo  -d hoteldemo -f db/mcp_db_demo_ddl.sql
 psql -h <host> -U mcpdemo  -d hoteldemo -f db/mcp_db_demo_dml.sql
 ```
 
-The user script creates a login role `mcpdemo` with the password `mcpdemo`. Change it for
-anything but a demo on your own machine. The DDL creates three schemas owned by `mcpdemo`:
+The user script creates two login roles: `mcpdemo` (password `mcpdemo`), which owns the demo,
+and `mcpdemo_customer` (password `mcpdemo_customer`), which owns nothing and is what the
+customer config connects as. Change both passwords for anything but a demo on your own machine. The DDL creates three schemas owned by `mcpdemo`:
 
 | Schema | Holds | Oracle equivalent |
 | --- | --- | --- |
@@ -115,6 +116,33 @@ MCPDBWizard sets the value for the length of each tool call, and the routines in
 connection without `CUSTOMER_NAME` is refused, and one customer cannot see, book as or cancel
 for another. Nothing needs installing in the database for this. The free tier runs one server
 at a time, so stop `mcpdemo` before you start `mcpdemo_customer`.
+
+#### Row-level security underneath
+
+The routines are the first line: none of them takes a customer name. The database is the second.
+`customers`, `room_bookings` and `complaints` have row-level security policies for the
+`mcpdemo_customer` login, keyed on the same `mcp.customer_name` setting. On that login, *any*
+SQL, not only the demo's routines, sees and writes only the pinned customer's rows. With no
+customer pinned it sees none, so a missing value fails closed. `mcpdemo` owns the tables, so the
+policies do not apply to it and the staff config still sees everything.
+
+Checking availability has to count *every* customer's bookings, or a room someone else holds
+would look free and be booked twice. `getroomlist` asks `room_is_booked`, a `SECURITY DEFINER`
+function that runs as `mcpdemo` and answers only yes or no, so a customer is never shown
+another customer's bookings.
+
+The policies only bind a connection that logs in as `mcpdemo_customer`. `config/mcpdemo_customer.json`
+names that login, but the console stamps its own connection (`MCPDBWIZARD_DB_USER`) into every
+config it saves. To have the console's customer server connect as `mcpdemo_customer`, run a
+console whose settings name it:
+
+```sh
+  -e MCPDBWIZARD_DB_USER=mcpdemo_customer \
+  -e DB_PASS=mcpdemo_customer \
+```
+
+On a console connected as `mcpdemo` the customer config still works, and the routines still
+confine each connection to one customer; only the database-level check is skipped.
 
 ## The schema
 
@@ -204,6 +232,9 @@ occupancy and availability have something to report other than "yes, there is a 
   `SYS_CONTEXT('MCP', 'CUSTOMER_NAME')`, and needs no context installed.
 - The routines contain no `COMMIT`: each MCP tool call commits or rolls back on its own.
   `bookroom` undoes its own bookings when it cannot book every room asked for.
+- Row-level security for the `mcpdemo_customer` login, and the `room_is_booked` function that
+  keeps availability correct under it, are new. The Oracle demo deliberately has no
+  equivalent.
 
 The header of `db/mcp_db_demo_ddl.sql` lists the rest.
 

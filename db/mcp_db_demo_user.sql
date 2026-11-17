@@ -3,11 +3,17 @@
 --
 --   psql -h <host> -U postgres -d <database> -f db/mcp_db_demo_user.sql
 --
--- It creates a login role mcpdemo (password mcpdemo: change it for anything but a demo)
--- and lets it create schemas in this database. The DDL then creates the demo's three
--- schemas, owned by mcpdemo, so mcp_db_demo_drop.sql can remove them again.
+-- It creates two login roles (change both passwords for anything but a demo):
+--
+-- * mcpdemo (password mcpdemo), which may create schemas in this database. The DDL
+--   creates the demo's three schemas owned by it, so mcp_db_demo_drop.sql can remove
+--   them again. The staff config connects as mcpdemo and sees every row.
+-- * mcpdemo_customer (password mcpdemo_customer), which owns nothing. The customer
+--   config connects as it, so the DDL's row-level security applies: it sees only the
+--   rows of the customer its connection URL names, and none without one.
 
 CREATE ROLE mcpdemo LOGIN PASSWORD 'mcpdemo';
+CREATE ROLE mcpdemo_customer LOGIN PASSWORD 'mcpdemo_customer';
 
 DO $$
 BEGIN
@@ -17,3 +23,4 @@ END $$;
 -- The SQL statements in the demo's configs name their tables unqualified, as Oracle
 -- resolves them against MCPDEMO's own schema; this is the Postgres equivalent.
 ALTER ROLE mcpdemo SET search_path = mcpdemo, public;
+ALTER ROLE mcpdemo_customer SET search_path = mcpdemo, public;

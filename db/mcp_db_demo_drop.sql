@@ -3,8 +3,8 @@
 --
 --   psql -h <host> -U mcpdemo -d <database> -f db/mcp_db_demo_drop.sql
 --
--- The role itself is left alone. To remove that too, as a superuser:
---   DROP OWNED BY mcpdemo; DROP ROLE mcpdemo;
+-- The roles are left alone. To remove them too, as a superuser:
+--   DROP OWNED BY mcpdemo, mcpdemo_customer; DROP ROLE mcpdemo, mcpdemo_customer;
 
 SET client_min_messages = warning;
 
